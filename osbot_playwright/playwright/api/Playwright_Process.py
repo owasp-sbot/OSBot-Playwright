@@ -2,6 +2,8 @@ import subprocess
 from urllib.parse import urljoin
 
 import psutil
+from osbot_utils.utils.Env import get_env
+
 from osbot_utils.utils.Files import path_combine, temp_folder_current, folder_create, folder_exists, file_exists, \
     file_delete, folder_delete_recursively
 from osbot_utils.utils.Http import wait_for_port, port_is_open, wait_for_port_closed, GET, GET_json
@@ -11,15 +13,17 @@ from osbot_utils.utils.Process import stop_process
 from osbot_utils.utils.Python_Logger import Python_Logger
 
 # todo: refactor this class to remove all references to chromium (i.e. make it generic for all browsers)
-DEFAULT_VALUE_DEBUG_PORT   = 9910
-FORMAT_CHROME_DATA_FOLDER  = 'playwright_chrome_data_folder_in_port__{port}'
-TARGET_HOST                = 'localhost'
-FILE_PLAYWRIGHT_PROCESS    = 'playwright_process.json'
-CHROMIUM_PROCESS_NAME      = 'Chromium'
-CHROMIUM_PARAM_DEBUG_PORT  = "--remote-debugging-port"
-CHROMIUM_PARAM_DATA_FOLDER = "--user-data-dir"
-CHROMIUM_PARAM_HEADLESS    = "--headless"
-CHROMIUM_USE_MOCK_KEYCHAIN = "--use-mock-keychain"          # to prevent the blocking permissions dialog about: "Chrome wants to use your confidential information stored .."
+DEFAULT_VALUE_DEBUG_PORT       = 9910
+FORMAT_CHROME_DATA_FOLDER      = 'playwright_chrome_data_folder_in_port__{port}'
+TARGET_HOST                    = 'localhost'
+FILE_PLAYWRIGHT_PROCESS        = 'playwright_process.json'
+CHROMIUM_PROCESS_NAME          = 'Chromium'
+CHROMIUM_PARAM_DEBUG_PORT      = "--remote-debugging-port"
+CHROMIUM_PARAM_DATA_FOLDER     = "--user-data-dir"
+CHROMIUM_PARAM_HEADLESS        = "--headless"
+CHROMIUM_USE_MOCK_KEYCHAIN     = "--use-mock-keychain"          # to prevent the blocking permissions dialog about: "Chrome wants to use your confidential information stored .."
+ENV_VAR__PLAYWRIGHT__PROXY_URL = 'PLAYWRIGHT__PROXY_URL'
+
 # for more chrome launched options see https://github.com/GoogleChrome/chrome-launcher/blob/main/docs/chrome-flags-for-tools.md
 
 class Playwright_Process:
@@ -30,6 +34,7 @@ class Playwright_Process:
         self.browser_path  = browser_path
         self.headless      = headless
         self.reuse_browser = reuse_browser
+        self.proxy         = get_env(ENV_VAR__PLAYWRIGHT__PROXY_URL)
         #self._browser      = None
 
 
@@ -151,7 +156,12 @@ class Playwright_Process:
         params = [ self.browser_path                                    ,
                   f'{CHROMIUM_PARAM_DEBUG_PORT}={self.debug_port}'      ,
                   f'{CHROMIUM_PARAM_DATA_FOLDER}={browser_data_folder}' ,
-                   CHROMIUM_USE_MOCK_KEYCHAIN                           ]
+                   CHROMIUM_USE_MOCK_KEYCHAIN                           ,
+                   '--disable-infobars' ]
+
+        if self.proxy:
+            params.append(f'--proxy-server={self.proxy}')
+            params.append('--ignore-certificate-errors')
 
         if self.headless:
             params.append(CHROMIUM_PARAM_HEADLESS)
