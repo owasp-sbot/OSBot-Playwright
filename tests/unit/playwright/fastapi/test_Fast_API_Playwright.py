@@ -1,5 +1,5 @@
 from unittest                                                   import TestCase
-from osbot_fast_api.api.routes.Routes_Config                    import ROUTES_PATHS__CONFIG
+from osbot_fast_api.api.routes.Routes__Config                   import ROUTES_PATHS__CONFIG
 from osbot_playwright.playwright.fastapi.Fast_API_Playwright    import Fast_API_Playwright
 from osbot_playwright.playwright.fastapi.Routes__Playwright     import ROUTES_PATHS__PLAYWRIGHT
 
